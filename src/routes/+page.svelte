@@ -8,6 +8,8 @@
 	import "prismjs/components/prism-bash";
 	import "prismjs/components/prism-javascript";
 
+	repository.url = repository.url.replace(/\.git$/, "").replace("git+", "");
+
 	let pkg_manager = $state("npm");
 	let install_cmd = $derived.by(() => {
 		switch (pkg_manager) {
