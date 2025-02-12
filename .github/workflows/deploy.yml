@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build-site:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +27,14 @@ jobs:
         run: pnpm install
 
       - name: Build
+        env:
+          BASE_PATH: '/${{ github.event.repository.name }}'
         run: pnpm build
+      
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'build/'
 
       - name: Deploy
         env:
@@ -40,3 +47,20 @@ jobs:
           git --work-tree build add --all
           git --work-tree build commit -m "Deploy to GitHub Pages"
           git push origin gh-pages --force
+
+  deploy:
+    needs: build-site
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
