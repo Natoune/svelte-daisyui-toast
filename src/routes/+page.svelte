@@ -65,7 +65,7 @@
 	class="flex flex-col items-center justify-center h-screen bg-primary/10 p-10 shadow-lg"
 >
 	<img
-		src="/favicon.png"
+		src="favicon.png"
 		alt="Svelte DaisyUI Toast"
 		class="w-24 h-24 rounded-full bg-primary/20 p-2"
 	/>
