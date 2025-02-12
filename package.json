@@ -1,7 +1,7 @@
 {
 	"name": "@natoune/svelte-daisyui-toast",
 	"description": "A simple toaster component for Svelte with DaisyUI",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/Natoune/svelte-daisyui-toast.git"
