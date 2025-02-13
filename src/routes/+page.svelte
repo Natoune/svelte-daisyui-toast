@@ -7,6 +7,7 @@
 	import "prism-svelte";
 	import "prismjs/components/prism-bash";
 	import "prismjs/components/prism-javascript";
+	import RichContent from "./RichContent.svelte";
 
 	repository.url = repository.url.replace(/\.git$/, "").replace("git+", "");
 
@@ -31,27 +32,64 @@
 	let exampleCode = $derived.by(() => {
 		switch (example) {
 			case "default":
-				return `toast("${exampleMessage}", {
-	position: "${position}",
-	duration: ${duration},${dismissOnClick ? "" : "\r\n\tdismissOnClick: false,"}
-});`;
+				return (
+					`toast("${exampleMessage}", {\r\n` +
+					`\tposition: "${position}",\r\n` +
+					`\tduration: ${duration},\r\n` +
+					(dismissOnClick ? "" : "\tdismissOnClick: false,\r\n") +
+					"});"
+				);
 			case "promise":
-				return `toast.promise(
-	saveSettings(settings),
-	{
-		loading: "Saving...",
-		success: "Settings saved!",
-		error: "Could not save.",
-	},
-	{
-		position: "${position}",
-		duration: ${duration},${dismissOnClick ? "" : "\r\n\tdismissOnClick: false,"}
-);`;
+				return (
+					"toast.promise(\r\n" +
+					"\tsaveSettings(settings),\r\n" +
+					"\t{\r\n" +
+					'\t\tloading: "Saving...",\r\n' +
+					'\t\tsuccess: "Settings saved!",\r\n' +
+					'\t\terror: "Could not save.",\r\n' +
+					"\t},\r\n" +
+					"\t{\r\n" +
+					`\t\tposition: "${position}",\r\n` +
+					`\t\tduration: ${duration},\r\n` +
+					(dismissOnClick ? "" : "\t\tdismissOnClick: false,\r\n") +
+					"});"
+				);
+			case "svelte":
+				return (
+					`toast(RichContent, {\r\n` +
+					"\tprops: { someProp: '⭐' },\r\n" +
+					"\tduration: 0,\r\n" +
+					"\tdismissOnClick: false,\r\n" +
+					"});" +
+					"\r\n" +
+					"\r\n" +
+					"// RichContent.svelte\r\n" +
+					'<script lang="ts">\r\n' +
+					`\timport type { Toast } from '${name}';\r\n` +
+					`\timport _toast from '${name}';\r\n` +
+					"\r\n" +
+					"\texport let toast: Toast;\r\n" +
+					"\texport let someProp: string;\r\n" +
+					`</${"script"}>\r\n` +
+					"<span>\r\n" +
+					"\tCustom and <b>bold</b> with props like {someProp}!\r\n" +
+					"\t<button\r\n" +
+					'\t\tclass="btn btn-xs btn-neutral btn-outline ml-2"\r\n' +
+					"\t\tonclick={() => _toast.dismiss(toast.id)}\r\n" +
+					"\t>\r\n" +
+					"\t\tDismiss\r\n" +
+					"\t</button>\r\n" +
+					"</span>"
+				);
 			default:
-				return `toast.${example}("${exampleMessage}", {
-	position: "${position}",
-	duration: ${duration},${dismissOnClick ? "" : "\r\n\tdismissOnClick: false,"}
-});`;
+				return (
+					`toast.${example}("${exampleMessage}", {\r\n` +
+					(example === "icon" ? `\ticon: "👏",\r\n` : "") +
+					`\tposition: "${position}",\r\n` +
+					`\tduration: ${duration},\r\n` +
+					(dismissOnClick ? "" : "\tdismissOnClick: false,\r\n") +
+					"});"
+				);
 		}
 	});
 
@@ -403,15 +441,65 @@
 			>
 				Promise
 			</button>
+			<button
+				class="btn"
+				class:btn-outline={example !== "icon"}
+				onclick={() => {
+					example = "icon";
+					exampleMessage = "Good Job!";
+					toast(exampleMessage, {
+						position,
+						duration,
+						dismissOnClick,
+						icon: "👏",
+					});
+				}}
+			>
+				Custom Icon
+			</button>
+			<button
+				class="btn"
+				class:btn-outline={example !== "html"}
+				onclick={() => {
+					example = "html";
+					exampleMessage =
+						"<strong>HTML String</strong> <br/> <em>This is a toast message with HTML content.</em>";
+					toast(exampleMessage, {
+						position,
+						duration,
+						dismissOnClick,
+					});
+				}}
+			>
+				HTML String
+			</button>
+			<button
+				class="btn"
+				class:btn-outline={example !== "svelte"}
+				onclick={() => {
+					example = "svelte";
+					toast(RichContent, {
+						props: { someProp: "⭐" },
+						duration: 0,
+						dismissOnClick: false,
+					});
+				}}
+			>
+				Svelte Rich Content
+			</button>
 		</div>
 		{#key exampleCode}
 			<pre
-				class="rounded-md p-4 my-2 overflow-x-scroll language-javascript"><code
-					id="example_code"
+				class="rounded-md p-4 my-2 overflow-x-scroll language-{example ===
+				'svelte'
+					? 'svelte'
+					: 'javascript'}"><code id="example_code"
 					>{@html Prism.highlight(
 						exampleCode,
-						Prism.languages.javascript,
-						"javascript"
+						example === "svelte"
+							? Prism.languages.svelte
+							: Prism.languages.javascript,
+						example === "svelte" ? "svelte" : "javascript"
 					)}</code
 				></pre>
 		{/key}

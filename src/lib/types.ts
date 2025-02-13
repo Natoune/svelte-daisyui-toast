@@ -12,8 +12,9 @@ export interface MergedToastOptions {
 		| "bottom-center"
 		| "bottom-end";
 	duration: number;
-	icon?: string | Component;
 	dismissOnClick: boolean;
+	icon?: string | Component<any>;
+	props?: Record<string, any>;
 }
 
 export interface ToastOptions extends Partial<MergedToastOptions> {}
@@ -28,7 +29,7 @@ export type ToastType =
 
 export interface Toast {
 	id: number;
-	message: string;
+	message: string | Component<any>;
 	type: ToastType;
 	options: MergedToastOptions;
 }

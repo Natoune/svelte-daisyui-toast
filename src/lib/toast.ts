@@ -1,3 +1,4 @@
+import type { Component } from "svelte";
 import { writable } from "svelte/store";
 import ErrorIcon from "./icons/ErrorIcon.svelte";
 import InfoIcon from "./icons/InfoIcon.svelte";
@@ -56,7 +57,11 @@ function removeToastAfterDelay(id: number, delay = 5000) {
 		}, delay);
 }
 
-function createToast(message: string, type: ToastType, options?: ToastOptions) {
+function createToast(
+	message: Toast["message"],
+	type: ToastType,
+	options?: ToastOptions,
+) {
 	const id = toastId++;
 	toasts.update((currentToasts) => [
 		...currentToasts,
@@ -73,7 +78,7 @@ function createToast(message: string, type: ToastType, options?: ToastOptions) {
 
 function updateToast(
 	id: number,
-	message: string,
+	message: Toast["message"],
 	type: ToastType,
 	options?: ToastOptions,
 ) {
@@ -92,7 +97,11 @@ function updateToast(
 	removeToastAfterDelay(id, options?.duration);
 }
 
-export function setDefaultToastOptions(options: {
+function instanceOfComponent(object: any): object is Component {
+	return "$on" in object;
+}
+
+function setDefaultToastOptions(options: {
 	position?: MergedToastOptions["position"];
 	duration?: MergedToastOptions["duration"];
 	icons?: { [type in ToastType]?: MergedToastOptions["icon"] };
@@ -110,32 +119,69 @@ export function setDefaultToastOptions(options: {
 		defaultOptions.dismissOnClick = options.dismissOnClick;
 }
 
-export function clearToasts() {
+function clear() {
 	toasts.set([]);
 }
 
-export function removeToast(id: number) {
+export function dismiss(id: number) {
 	toasts.update((currentToasts) =>
 		currentToasts.filter((toast) => toast.id !== id),
 	);
 }
 
-const toast = (message: string, options?: ToastOptions) =>
+/**
+ * Display a toast.
+ * @param message The message to display in the toast. Can be an HTML string or a Svelte component.
+ * @param options Options to customize the toast.
+ * @returns The ID of the created toast.
+ */
+const toast = (message: Toast["message"], options?: ToastOptions) =>
 	createToast(message, "default", options);
-toast.info = (message: string, options?: ToastOptions) =>
+/**
+ * Display an info toast.
+ * @param message The message to display in the toast. Can be an HTML string or a Svelte component.
+ * @param options Options to customize the toast.
+ * @returns The ID of the created toast.
+ */
+toast.info = (message: Toast["message"], options?: ToastOptions) =>
 	createToast(message, "info", options);
-toast.success = (message: string, options?: ToastOptions) =>
+/**
+ * Display a success toast.
+ * @param message The message to display in the toast. Can be an HTML string or a Svelte component.
+ * @param options Options to customize the toast.
+ * @returns The ID of the created toast.
+ */
+toast.success = (message: Toast["message"], options?: ToastOptions) =>
 	createToast(message, "success", options);
-toast.warning = (message: string, options?: ToastOptions) =>
+/**
+ * Display a warning toast.
+ * @param message The message to display in the toast. Can be an HTML string or a Svelte component.
+ * @param options Options to customize the toast.
+ * @returns The ID of the created toast.
+ */
+toast.warning = (message: Toast["message"], options?: ToastOptions) =>
 	createToast(message, "warning", options);
-toast.error = (message: string, options?: ToastOptions) =>
+/**
+ * Display an error toast.
+ * @param message The message to display in the toast. Can be an HTML string or a Svelte component.
+ * @param options Options to customize the toast.
+ * @returns The ID of the created toast.
+ */
+toast.error = (message: Toast["message"], options?: ToastOptions) =>
 	createToast(message, "error", options);
+/**
+ * Wrap a promise to display a loading toast while the promise is pending.
+ * @param promise The promise to wrap.
+ * @param messages Messages to display in the loading, success, and error toasts.
+ * @param options Options to customize the loading toast.
+ * @returns A promise that resolves with the result of the wrapped promise.
+ */
 toast.promise = async <T>(
 	promise: Promise<T>,
 	messages: {
-		loading: string;
-		success: string | ((arg: T) => string);
-		error: string | ((arg: any) => string);
+		loading: Toast["message"];
+		success: Toast["message"] | ((arg: T) => Toast["message"]);
+		error: Toast["message"] | ((arg: any) => Toast["message"]);
 	},
 	options?: ToastOptions,
 ) => {
@@ -149,9 +195,10 @@ toast.promise = async <T>(
 		const data = await promise;
 		updateToast(
 			id,
-			typeof messages.success === "function"
-				? messages.success(data)
-				: messages.success,
+			typeof messages.success === "string" ||
+				instanceOfComponent(messages.success)
+				? messages.success
+				: messages.success(data),
 			"success",
 			options,
 		);
@@ -159,14 +206,28 @@ toast.promise = async <T>(
 	} catch (error) {
 		updateToast(
 			id,
-			typeof messages.error === "function"
-				? messages.error(error)
-				: messages.error,
+			typeof messages.error === "string" || instanceOfComponent(messages.error)
+				? messages.error
+				: messages.error(error),
 			"error",
 			options,
 		);
 		return error;
 	}
 };
+/**
+ * Set default options for toasts.
+ * @param options Options to set as default.
+ */
+toast.setDefaultOptions = setDefaultToastOptions;
+/**
+ * Clear all toasts.
+ */
+toast.clear = clear;
+/**
+ * Dismiss a toast.
+ * @param id The ID of the toast to dismiss.
+ */
+toast.dismiss = dismiss;
 
 export default toast;
