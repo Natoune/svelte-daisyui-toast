@@ -184,7 +184,7 @@ toast.promise = async <T>(
 		error: Toast["message"] | ((arg: any) => Toast["message"]);
 	},
 	options?: ToastOptions,
-) => {
+): Promise<T> => {
 	const id = createToast(messages.loading, "loading", {
 		...options,
 		icon: LoadingIcon,
